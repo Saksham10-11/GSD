@@ -1,0 +1,590 @@
+/* 
+  Green E-commerce App Styles
+  - Uses system fonts when possible (green practice: reduces font download)
+  - Minimizes animations (green practice: reduces CPU usage)
+  - Uses semantic HTML elements and optimized assets
+  - Uses efficient CSS selectors (green practice: faster rendering)
+*/
+
+:root {
+  /* Green color palette */
+  --primary-color: #2e7d32;
+  --secondary-color: #4caf50;
+  --accent-color: #81c784;
+  --background-color: #f1f8e9;
+  --text-color: #33691e;
+  --light-text: #f1f8e9;
+  --border-color: #c5e1a5;
+  
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Use system fonts when possible (green practice) */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  line-height: 1.6;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+  padding: var(--spacing-md);
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Header Styles */
+.header {
+  background-color: var(--primary-color);
+  color: var(--light-text);
+  padding: var(--spacing-md) var(--spacing-xl);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+}
+
+.logo svg {
+  margin-right: var(--spacing-sm);
+}
+
+.nav-links {
+  display: flex;
+  list-style: none;
+}
+
+.nav-links li {
+  margin-left: var(--spacing-lg);
+}
+
+.nav-links a {
+  color: var(--light-text);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease-in-out;
+}
+
+.nav-links a:hover {
+  color: var(--accent-color);
+}
+
+.cart-icon {
+  position: relative;
+  cursor: pointer;
+}
+
+.cart-count {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: var(--accent-color);
+  color: var(--text-color);
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+/* Footer Styles */
+.footer {
+  background-color: var(--primary-color);
+  color: var(--light-text);
+  padding: var(--spacing-lg) var(--spacing-xl);
+  margin-top: auto;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footer-section {
+  flex: 1;
+  margin-right: var(--spacing-xl);
+}
+
+.footer-section:last-child {
+  margin-right: 0;
+}
+
+.footer-section h3 {
+  margin-bottom: var(--spacing-md);
+  font-size: 1.1rem;
+}
+
+.footer-links {
+  list-style: none;
+}
+
+.footer-links li {
+  margin-bottom: var(--spacing-sm);
+}
+
+.footer-links a {
+  color: var(--light-text);
+  text-decoration: none;
+}
+
+.footer-links a:hover {
+  text-decoration: underline;
+}
+
+.eco-badge {
+  display: flex;
+  align-items: center;
+  background-color: var(--accent-color);
+  color: var(--text-color);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  margin-top: var(--spacing-sm);
+  width: fit-content;
+}
+
+.eco-badge svg {
+  margin-right: var(--spacing-xs);
+}
+
+/* Product List Styles */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.product-card {
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease-in-out;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+}
+
+.product-image {
+  height: 200px;
+  width: 100%;
+  object-fit: cover;
+}
+
+.product-info {
+  padding: var(--spacing-md);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-title {
+  font-size: 1.1rem;
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-color);
+}
+
+.product-price {
+  font-weight: bold;
+  margin-bottom: var(--spacing-sm);
+}
+
+.sustainability-score {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+}
+
+.score-bar {
+  height: 6px;
+  flex: 1;
+  background-color: #e0e0e0;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-left: var(--spacing-sm);
+}
+
+.score-fill {
+  height: 100%;
+  background-color: var(--secondary-color);
+}
+
+.product-actions {
+  margin-top: auto;
+}
+
+.btn {
+  display: inline-block;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.btn:hover {
+  background-color: var(--secondary-color);
+}
+
+.btn-block {
+  display: block;
+  width: 100%;
+}
+
+.btn-outline {
+  background-color: transparent;
+  border: 1px solid var(--primary-color);
+  color: var(--primary-color);
+}
+
+.btn-outline:hover {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+/* Cart Styles */
+.cart-container {
+  background-color: white;
+  border-radius: 8px;
+  padding: var(--spacing-lg);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.cart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: var(--spacing-md);
+}
+
+.cart-items {
+  margin-bottom: var(--spacing-lg);
+}
+
+.cart-item {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  padding: var(--spacing-md) 0;
+}
+
+.cart-item-image {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-right: var(--spacing-md);
+}
+
+.cart-item-details {
+  flex: 1;
+}
+
+.cart-item-title {
+  font-weight: 500;
+  margin-bottom: var(--spacing-xs);
+}
+
+.cart-item-price {
+  color: var(--text-color);
+  font-weight: bold;
+}
+
+.cart-item-actions {
+  display: flex;
+  align-items: center;
+  margin-top: var(--spacing-sm);
+}
+
+.quantity-control {
+  display: flex;
+  align-items: center;
+  margin-right: var(--spacing-md);
+}
+
+.quantity-btn {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--background-color);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.quantity-value {
+  margin: 0 var(--spacing-sm);
+  width: 30px;
+  text-align: center;
+}
+
+.remove-btn {
+  background-color: transparent;
+  border: none;
+  color: #f44336;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.remove-btn svg {
+  margin-right: var(--spacing-xs);
+}
+
+.cart-summary {
+  background-color: var(--background-color);
+  padding: var(--spacing-md);
+  border-radius: 4px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-sm);
+}
+
+.cart-total {
+  font-weight: bold;
+  font-size: 1.2rem;
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+}
+
+.green-options {
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background-color: #e8f5e9;
+  border-radius: 4px;
+}
+
+.option-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+}
+
+.green-checkbox {
+  margin-right: var(--spacing-sm);
+}
+
+.carbon-info {
+  margin-top: var(--spacing-md);
+  font-size: 0.9rem;
+  padding: var(--spacing-sm);
+  background-color: white;
+  border-radius: 4px;
+}
+
+.eco-tip {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-sm);
+  background-color: var(--accent-color);
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+/* Chat Styles */
+.chat-container {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  height: 600px;
+  background-color: white;
+}
+
+.chat-header {
+  background-color: var(--primary-color);
+  color: white;
+  padding: var(--spacing-md);
+  display: flex;
+  align-items: center;
+}
+
+.chat-header h2 {
+  margin-left: var(--spacing-sm);
+  font-size: 1.2rem;
+}
+
+.chat-messages {
+  flex: 1;
+  padding: var(--spacing-md);
+  overflow-y: auto;
+}
+
+.message {
+  margin-bottom: var(--spacing-md);
+  display: flex;
+}
+
+.user-message {
+  justify-content: flex-end;
+}
+
+.message-content {
+  max-width: 70%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: 16px;
+}
+
+.user-message .message-content {
+  background-color: var(--primary-color);
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.ai-message .message-content {
+  background-color: var(--background-color);
+  border-bottom-left-radius: 4px;
+}
+
+.chat-input {
+  padding: var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+}
+
+.chat-input input {
+  flex: 1;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  margin-right: var(--spacing-sm);
+}
+
+.chat-input button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
+  
+  .cart-item {
+    flex-direction: column;
+  }
+  
+  .cart-item-image {
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  .footer-content {
+    flex-direction: column;
+  }
+  
+  .footer-section {
+    margin-right: 0;
+    margin-bottom: var(--spacing-lg);
+  }
+}
+
+/* Dark mode media query for energy savings (green practice) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background-color: #1e1e1e;
+    --text-color: #e0e0e0;
+    --border-color: #4caf50;
+  }
+  
+  .product-card, 
+  .cart-container,
+  .chat-container {
+    background-color: #2d2d2d;
+    color: var(--text-color);
+  }
+  
+  .ai-message .message-content {
+    background-color: #333;
+    color: var(--text-color);
+  }
+  
+  .green-options {
+    background-color: #2e7d32;
+    color: white;
+  }
+  
+  .carbon-info {
+    background-color: #333;
+    color: var(--text-color);
+  }
+}
+
+/* Print styles - optimize for lower ink usage (green practice) */
+@media print {
+  body {
+    background-color: white;
+    color: black;
+  }
+  
+  .header, .footer, .btn, .cart-item-actions {
+    display: none;
+  }
+  
+  .product-card {
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+}
