@@ -10,6 +10,19 @@ const mongoose = require("mongoose");
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Replace the simple CORS middleware configuration:
+app.use(cors());
+
+// With this more detailed configuration:
+app.use(
+  cors({
+    origin: ["http://localhost:3000", "http://localhost:8000"],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization", "user-id"],
+  })
+);
+
 // Connect to MongoDB (green practice: connection pooling enabled by default)
 mongoose
   .connect(process.env.MONGODB_URI, {
