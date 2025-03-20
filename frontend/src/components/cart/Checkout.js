@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FaLeaf, FaShieldAlt, FaTruck, FaCreditCard } from "react-icons/fa";
 import { useCart } from "../../context/CartContext";
+import "./Checkout.css";
 
 const Checkout = ({ onApiCall }) => {
   const navigate = useNavigate();

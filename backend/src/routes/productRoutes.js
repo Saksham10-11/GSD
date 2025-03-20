@@ -27,4 +27,69 @@ router.get("/:id", getProductById);
  */
 router.post("/seed", seedProducts);
 
+router.get("/filter", async (req, res) => {
+  try {
+    const {
+      minSustainability,
+      recycledMaterials,
+      category,
+      maxCarbonFootprint,
+    } = req.query;
+
+    // Build query object
+    const query = {};
+
+    // Add filters only if they exist
+    if (minSustainability) {
+      query.sustainabilityScore = { $gte: parseInt(minSustainability) };
+    }
+
+    if (recycledMaterials === "true") {
+      query.recycledMaterials = true;
+    }
+
+    if (category && category !== "all") {
+      query.category = category;
+    }
+
+    if (maxCarbonFootprint) {
+      query.carbonFootprint = { $lte: parseInt(maxCarbonFootprint) };
+    }
+
+    // Execute query
+    const products = await Product.find(query).lean();
+
+    // Calculate stats
+    const totalProducts = await Product.countDocuments();
+    const recycledProducts = await Product.countDocuments({
+      recycledMaterials: true,
+    });
+    const sustainableProducts = await Product.countDocuments({
+      sustainabilityScore: { $gte: 70 },
+    });
+
+    // Calculate average sustainability score
+    const avgSustainability =
+      products.length > 0
+        ? products.reduce(
+            (sum, product) => sum + (product.sustainabilityScore || 0),
+            0
+          ) / products.length
+        : 0;
+
+    res.json({
+      products,
+      stats: {
+        totalProducts,
+        recycledProducts,
+        sustainableProducts,
+        avgSustainability,
+      },
+    });
+  } catch (error) {
+    console.error("Error filtering products:", error);
+    res.status(500).json({ message: "Server error while filtering products" });
+  }
+});
+
 module.exports = router;
