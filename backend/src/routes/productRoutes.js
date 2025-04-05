@@ -3,7 +3,6 @@ const router = express.Router();
 const {
   getProducts,
   getProductById,
-  seedProducts,
 } = require("../controllers/productController");
 
 /**
@@ -25,7 +24,6 @@ router.get("/:id", getProductById);
  * @desc    Seed product data for development
  * @access  Public (should be secured in production)
  */
-router.post("/seed", seedProducts);
 
 router.get("/filter", async (req, res) => {
   try {

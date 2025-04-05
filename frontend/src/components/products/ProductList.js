@@ -19,9 +19,12 @@ const ProductList = ({ onApiCall }) => {
     sort: "price-asc",
   });
   const [usingMockData, setUsingMockData] = useState(false);
+  const [productImages, setProductImages] = useState({});
+  const [imageLoading, setImageLoading] = useState(false);
 
   // Cache reference to avoid unnecessary API calls
   const productsCache = useRef({});
+  const imageCache = useRef({});
   const lastFetchTime = useRef(0);
   const fetchTimeoutRef = useRef(null);
 
@@ -32,6 +35,105 @@ const ProductList = ({ onApiCall }) => {
   const getCacheKey = useCallback(() => {
     return `${filters.category}_${filters.sustainableOnly}_${filters.sort}`;
   }, [filters]);
+
+  // Fetch images from Pexels API
+  const fetchProductImages = useCallback(
+    async (productsList) => {
+      if (!productsList.length) return;
+
+      // To reduce API calls, we'll batch process images
+      const productsNeedingImages = productsList.filter(
+        (product) => !imageCache.current[product._id]
+      );
+
+      if (!productsNeedingImages.length) {
+        // If we have all images cached, just use the cache
+        const cachedImages = {};
+        productsList.forEach((product) => {
+          cachedImages[product._id] = imageCache.current[product._id];
+        });
+        setProductImages(cachedImages);
+        return;
+      }
+
+      setImageLoading(true);
+      const images = { ...productImages };
+
+      try {
+        // Get API key from environment variables
+        const PEXELS_API_KEY = process.env.REACT_APP_PEXELS_API_KEY;
+
+        if (!PEXELS_API_KEY) {
+          throw new Error("Pexels API key not found in environment variables");
+        }
+
+        // Process in smaller batches to be environmentally friendly (fewer API calls)
+        const batchSize = 5;
+        for (let i = 0; i < productsNeedingImages.length; i += batchSize) {
+          const batch = productsNeedingImages.slice(i, i + batchSize);
+
+          await Promise.all(
+            batch.map(async (product) => {
+              try {
+                // Use product category and name for better search results
+                const searchTerm = `${product.category} ${product.name}`;
+                const response = await fetch(
+                  `https://api.pexels.com/v1/search?query=${encodeURIComponent(
+                    searchTerm
+                  )}&per_page=1`,
+                  {
+                    headers: {
+                      Authorization: PEXELS_API_KEY,
+                    },
+                  }
+                );
+
+                if (!response.ok) {
+                  throw new Error(`Pexels API error: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                let imageUrl;
+                if (data.photos && data.photos.length > 0) {
+                  // Use medium size for better performance
+                  imageUrl = data.photos[0].src.medium;
+                } else {
+                  // Use a specific placeholder based on category
+                  imageUrl = `https://via.placeholder.com/300x200?text=${encodeURIComponent(
+                    product.category + ": " + product.name
+                  )}`;
+                }
+
+                // Update the image cache
+                imageCache.current[product._id] = imageUrl;
+                images[product._id] = imageUrl;
+              } catch (err) {
+                console.error(`Error fetching image for ${product.name}:`, err);
+                images[
+                  product._id
+                ] = `https://via.placeholder.com/300x200?text=${encodeURIComponent(
+                  product.name
+                )}`;
+              }
+            })
+          );
+
+          // Small delay between batches to be gentle on the API
+          if (i + batchSize < productsNeedingImages.length) {
+            await new Promise((resolve) => setTimeout(resolve, 500));
+          }
+        }
+
+        setProductImages(images);
+      } catch (error) {
+        console.error("Error fetching product images:", error);
+      } finally {
+        setImageLoading(false);
+      }
+    },
+    [productImages]
+  );
 
   // Fetch products with debounced API calls (green practice)
   const fetchProducts = useCallback(async () => {
@@ -51,6 +153,9 @@ const ProductList = ({ onApiCall }) => {
         setProducts(cacheEntry);
         setLoading(false);
         setUsingMockData(false);
+
+        // Fetch images for cached products
+        fetchProductImages(cacheEntry);
         return;
       }
 
@@ -111,6 +216,9 @@ const ProductList = ({ onApiCall }) => {
       setProducts(sortedProducts);
       setLoading(false);
       setError(null);
+
+      // Fetch images for the products
+      fetchProductImages(sortedProducts);
     } catch (err) {
       setError("Error fetching products. Please try again.");
       setLoading(false);
@@ -121,9 +229,10 @@ const ProductList = ({ onApiCall }) => {
         const mockData = getMockProducts();
         setProducts(mockData);
         setUsingMockData(true);
+        fetchProductImages(mockData);
       }
     }
-  }, [filters, onApiCall]);
+  }, [filters, onApiCall, fetchProductImages]);
 
   // Debounced filter change to reduce API calls (green practice)
   useEffect(() => {
@@ -186,7 +295,7 @@ const ProductList = ({ onApiCall }) => {
 
   return (
     <div>
-      <h1>Sustainable Products</h1>
+      <h1>Products</h1>
 
       {/* Mock Data Notice */}
       {usingMockData && (
@@ -242,6 +351,8 @@ const ProductList = ({ onApiCall }) => {
               <option value="Clothing">Clothing</option>
               <option value="Office">Office</option>
               <option value="Health">Health</option>
+              <option value="Home">Home</option>
+              <option value="Furniture">Furniture</option>
             </select>
           </div>
 
@@ -340,14 +451,13 @@ const ProductList = ({ onApiCall }) => {
               <div key={product._id} className="product-card">
                 <img
                   src={
-                    product.image ||
+                    productImages[product._id] ||
                     `https://via.placeholder.com/300x200?text=${encodeURIComponent(
                       product.name
                     )}`
                   }
                   alt={product.name}
                   className="product-image"
-                  // Green practice: Use loading=lazy to defer loading offscreen images
                   loading="lazy"
                 />
 
@@ -408,27 +518,6 @@ const ProductList = ({ onApiCall }) => {
           )}
         </>
       )}
-
-      {/* Green Software Info */}
-      <div
-        style={{
-          marginTop: "30px",
-          padding: "15px",
-          backgroundColor: "#e8f5e9",
-          borderRadius: "8px",
-        }}
-      >
-        <h3 style={{ display: "flex", alignItems: "center" }}>
-          <FaLeaf style={{ marginRight: "8px" }} />
-          Green Shopping Tips
-        </h3>
-        <ul style={{ marginTop: "10px", marginLeft: "20px" }}>
-          <li>Look for products with high sustainability scores</li>
-          <li>Consider the carbon footprint of each product</li>
-          <li>Choose items made from recycled materials when possible</li>
-          <li>Consolidate your orders to reduce shipping emissions</li>
-        </ul>
-      </div>
     </div>
   );
 };
