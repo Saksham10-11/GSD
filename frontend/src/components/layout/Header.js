@@ -1,15 +1,20 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import {
   FaLeaf,
   FaShoppingCart,
-  FaComments,
   FaChartLine,
+  FaMoon,
+  FaSun,
 } from "react-icons/fa";
 import { useCart } from "../../context/CartContext";
+import "./Header.css";
 
 const Header = ({ metrics }) => {
   const { totalItems } = useCart();
+  const location = useLocation();
+  const [scrolled, setScrolled] = useState(false);
+  const [animateLeaf, setAnimateLeaf] = useState(false);
 
   // Green practice: Calculate energy efficiency class based on metrics
   const getEnergyClass = () => {
@@ -25,16 +30,45 @@ const Header = ({ metrics }) => {
     return "D";
   };
 
+  // Handle scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 30) {
+        setScrolled(true);
+      } else {
+        setScrolled(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Periodically animate the leaf icon
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setAnimateLeaf(true);
+      setTimeout(() => setAnimateLeaf(false), 2000);
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <header className="header">
+    <header className={`header ${scrolled ? "header-scrolled" : ""}`}>
       <div className="header-content">
         <Link to="/" className="logo">
-          <FaLeaf size={24} />
+          <div className={`logo-icon ${animateLeaf ? "pulse" : ""}`}>
+            <FaLeaf size={24} />
+          </div>
           <span>Green Shop</span>
         </Link>
 
         {/* Energy efficiency badge */}
-        <div className="eco-badge" title="Website energy efficiency rating">
+        <div
+          className="eco-badge header-badge"
+          title="Website energy efficiency rating"
+        >
           <FaLeaf size={14} />
           <span>Energy Class {getEnergyClass()}</span>
         </div>
@@ -42,20 +76,37 @@ const Header = ({ metrics }) => {
         <nav>
           <ul className="nav-links">
             <li>
-              <Link to="/">Products</Link>
+              <Link
+                to="/"
+                className={location.pathname === "/" ? "active" : ""}
+              >
+                Products
+              </Link>
             </li>
             <li>
-              <Link to="/green-metrics">
+              <Link
+                to="/green-metrics"
+                className={
+                  location.pathname === "/green-metrics" ? "active" : ""
+                }
+              >
                 <FaChartLine />
                 <span>Eco Impact</span>
               </Link>
             </li>
             <li>
-              <Link to="/cart" className="cart-icon">
-                <FaShoppingCart size={20} />
-                {totalItems > 0 && (
-                  <span className="cart-count">{totalItems}</span>
-                )}
+              <Link
+                to="/cart"
+                className={`cart-icon ${
+                  location.pathname === "/cart" ? "active" : ""
+                }`}
+              >
+                <div className="cart-icon-container">
+                  <FaShoppingCart size={20} />
+                  {totalItems > 0 && (
+                    <span className="cart-count">{totalItems}</span>
+                  )}
+                </div>
               </Link>
             </li>
           </ul>
