@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
 import ProductList from "./components/products/ProductList";
-import ProductDetail from "./components/products/ProductDetail";
 import Cart from "./components/cart/Cart";
 import Checkout from "./components/cart/Checkout";
 import GreenMetrics from "./components/dashboard/GreenMetrics";
@@ -58,10 +57,6 @@ function App() {
                 <Route
                   path="/"
                   element={<ProductList onApiCall={trackApiCall} />}
-                />
-                <Route
-                  path="/product/:id"
-                  element={<ProductDetail onApiCall={trackApiCall} />}
                 />
                 <Route
                   path="/cart"

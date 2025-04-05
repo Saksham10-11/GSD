@@ -5,6 +5,8 @@ import {
   FaRecycle,
   FaShoppingCart,
   FaInfoCircle,
+  FaChevronLeft,
+  FaChevronRight,
 } from "react-icons/fa";
 import { useCart } from "../../context/CartContext";
 import axiosInstance, { getMockProducts } from "../../utils/axiosConfig";
@@ -17,10 +19,17 @@ const ProductList = ({ onApiCall }) => {
     category: "",
     sustainableOnly: false,
     sort: "price-asc",
+    page: 1,
+    limit: 10, // Default items per page
   });
   const [usingMockData, setUsingMockData] = useState(false);
   const [productImages, setProductImages] = useState({});
   const [imageLoading, setImageLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalProducts: 0,
+  });
 
   // Cache reference to avoid unnecessary API calls
   const productsCache = useRef({});
@@ -33,7 +42,7 @@ const ProductList = ({ onApiCall }) => {
 
   // Generate a cache key from the current filters
   const getCacheKey = useCallback(() => {
-    return `${filters.category}_${filters.sustainableOnly}_${filters.sort}`;
+    return `${filters.category}_${filters.sustainableOnly}_${filters.sort}_${filters.page}_${filters.limit}`;
   }, [filters]);
 
   // Fetch images from Pexels API
@@ -150,22 +159,51 @@ const ProductList = ({ onApiCall }) => {
 
       if (cacheEntry && now - lastFetchTime.current < 300000) {
         // Use cached data if available and recent
-        setProducts(cacheEntry);
+        setProducts(cacheEntry.products);
+        setPagination(cacheEntry.pagination);
         setLoading(false);
         setUsingMockData(false);
 
         // Fetch images for cached products
-        fetchProductImages(cacheEntry);
+        fetchProductImages(cacheEntry.products);
         return;
       }
 
       // Create query string from filters
       const queryParams = new URLSearchParams();
       if (filters.category) queryParams.append("category", filters.category);
-      if (filters.sustainableOnly)
-        queryParams.append("sustainableOnly", "true");
+      if (filters.sustainableOnly) queryParams.append("green", "true");
+
+      // Add pagination parameters
+      queryParams.append("page", filters.page);
+      queryParams.append("limit", filters.limit);
+
+      // Add sorting parameters
+      let sort = "createdAt";
+      let order = "desc";
+
+      switch (filters.sort) {
+        case "price-asc":
+          sort = "price";
+          order = "asc";
+          break;
+        case "price-desc":
+          sort = "price";
+          order = "desc";
+          break;
+        case "sustainability":
+          sort = "sustainabilityScore";
+          order = "desc";
+          break;
+        default:
+          break;
+      }
+
+      queryParams.append("sort", sort);
+      queryParams.append("order", order);
 
       let productData;
+      let paginationData;
 
       try {
         const response = await axiosInstance.get(
@@ -177,48 +215,71 @@ const ProductList = ({ onApiCall }) => {
 
         productData = response.data.data;
         setUsingMockData(false);
+
+        // Update pagination state
+        paginationData = {
+          currentPage: response.data.page || 1,
+          totalPages: response.data.pages || 1,
+          totalProducts: response.data.total || productData.length,
+        };
+
+        setPagination(paginationData);
       } catch (apiError) {
         console.log("API error, using mock data:", apiError.message);
         // Use mock data when API is unavailable
-        productData = getMockProducts().filter((product) => {
+        const allMockProducts = getMockProducts().filter((product) => {
           if (filters.category && product.category !== filters.category)
             return false;
           if (filters.sustainableOnly && product.sustainabilityScore < 80)
             return false;
           return true;
         });
+
+        // Sort mock products
+        switch (filters.sort) {
+          case "price-asc":
+            allMockProducts.sort((a, b) => a.price - b.price);
+            break;
+          case "price-desc":
+            allMockProducts.sort((a, b) => b.price - a.price);
+            break;
+          case "sustainability":
+            allMockProducts.sort(
+              (a, b) => b.sustainabilityScore - a.sustainabilityScore
+            );
+            break;
+          default:
+          // No sorting
+        }
+
+        // Calculate pagination for mock data
+        const startIndex = (filters.page - 1) * filters.limit;
+        const endIndex = startIndex + parseInt(filters.limit, 10);
+        productData = allMockProducts.slice(startIndex, endIndex);
+
+        paginationData = {
+          currentPage: filters.page,
+          totalPages: Math.ceil(allMockProducts.length / filters.limit),
+          totalProducts: allMockProducts.length,
+        };
+
+        setPagination(paginationData);
         setUsingMockData(true);
       }
 
-      let sortedProducts = [...productData];
-
-      // Sort products client-side to reduce server load (green practice)
-      switch (filters.sort) {
-        case "price-asc":
-          sortedProducts.sort((a, b) => a.price - b.price);
-          break;
-        case "price-desc":
-          sortedProducts.sort((a, b) => b.price - a.price);
-          break;
-        case "sustainability":
-          sortedProducts.sort(
-            (a, b) => b.sustainabilityScore - a.sustainabilityScore
-          );
-          break;
-        default:
-        // No sorting
-      }
-
-      // Update cache and last fetch time
-      productsCache.current[cacheKey] = sortedProducts;
+      // Update cache and last fetch time with both products and pagination
+      productsCache.current[cacheKey] = {
+        products: productData,
+        pagination: paginationData,
+      };
       lastFetchTime.current = now;
 
-      setProducts(sortedProducts);
+      setProducts(productData);
       setLoading(false);
       setError(null);
 
       // Fetch images for the products
-      fetchProductImages(sortedProducts);
+      fetchProductImages(productData);
     } catch (err) {
       setError("Error fetching products. Please try again.");
       setLoading(false);
@@ -226,8 +287,13 @@ const ProductList = ({ onApiCall }) => {
 
       // Try to show mock data if anything fails
       if (!products.length) {
-        const mockData = getMockProducts();
+        const mockData = getMockProducts().slice(0, filters.limit);
         setProducts(mockData);
+        setPagination({
+          currentPage: 1,
+          totalPages: 1,
+          totalProducts: mockData.length,
+        });
         setUsingMockData(true);
         fetchProductImages(mockData);
       }
@@ -444,7 +510,14 @@ const ProductList = ({ onApiCall }) => {
       {!loading && !error && (
         <>
           <p style={{ marginBottom: "15px" }}>
-            <strong>{products.length}</strong> products found
+            <strong>{pagination.totalProducts}</strong> products found
+            {!usingMockData && (
+              <span>
+                {" "}
+                (showing page {pagination.currentPage} of{" "}
+                {pagination.totalPages})
+              </span>
+            )}
           </p>
           <div className="product-grid">
             {products.map((product) => (
@@ -462,42 +535,9 @@ const ProductList = ({ onApiCall }) => {
                 />
 
                 <div className="product-info">
-                  <h3 className="product-title">
-                    <Link to={`/product/${product._id}`}>{product.name}</Link>
-                  </h3>
+                  <h3 className="product-title">{product.name}</h3>
 
                   <p className="product-price">${product.price.toFixed(2)}</p>
-
-                  {/* Sustainability Indicators */}
-                  <div className="sustainability-score">
-                    <span>Sustainability:</span>
-                    <div className="score-bar">
-                      <div
-                        className="score-fill"
-                        style={{ width: `${product.sustainabilityScore}%` }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  {renderSustainabilityBadge(product.sustainabilityScore)}
-
-                  {product.recycledMaterials && (
-                    <div
-                      className="eco-badge"
-                      title="Made with recycled materials"
-                    >
-                      <FaRecycle color="#4caf50" />
-                      <span>Recycled</span>
-                    </div>
-                  )}
-
-                  {/* Carbon Footprint */}
-                  <p
-                    className="carbon-info"
-                    style={{ fontSize: "0.8rem", marginTop: "8px" }}
-                  >
-                    Carbon Footprint: {product.carbonFootprint}kg CO2e
-                  </p>
 
                   <div className="product-actions">
                     <button
@@ -515,6 +555,57 @@ const ProductList = ({ onApiCall }) => {
 
           {products.length === 0 && (
             <p>No products found. Try adjusting your filters.</p>
+          )}
+
+          {/* Pagination Controls */}
+          {pagination.totalPages > 1 && (
+            <div className="pagination-controls">
+              <button
+                className="pagination-btn"
+                disabled={pagination.currentPage === 1}
+                onClick={() =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    page: prev.page - 1,
+                  }))
+                }
+                aria-label="Previous page"
+              >
+                <FaChevronLeft /> Previous
+              </button>
+
+              <div className="pagination-info">
+                <span>
+                  Page {pagination.currentPage} of {pagination.totalPages}
+                </span>
+                <select
+                  className="limit-select"
+                  name="limit"
+                  value={filters.limit}
+                  onChange={handleFilterChange}
+                  aria-label="Items per page"
+                >
+                  <option value="5">5 per page</option>
+                  <option value="10">10 per page</option>
+                  <option value="20">20 per page</option>
+                  <option value="50">50 per page</option>
+                </select>
+              </div>
+
+              <button
+                className="pagination-btn"
+                disabled={pagination.currentPage === pagination.totalPages}
+                onClick={() =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    page: prev.page + 1,
+                  }))
+                }
+                aria-label="Next page"
+              >
+                Next <FaChevronRight />
+              </button>
+            </div>
           )}
         </>
       )}
