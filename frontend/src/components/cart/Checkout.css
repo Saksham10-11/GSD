@@ -316,8 +316,8 @@
   }
 
   .order-summary {
-    position: static;
-    margin-top: 2rem;
+    position: sticky; /* Ensure it remains sticky on smaller screens */
+    top: 1rem;
   }
 
   .form-row {

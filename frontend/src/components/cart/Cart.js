@@ -86,9 +86,7 @@ const Cart = ({ onApiCall }) => {
                 // Track API call
                 if (onApiCall) onApiCall(1);
 
-                const query = encodeURIComponent(
-                  item.product.category || item.product.name
-                );
+                const query = encodeURIComponent(item.product.name);
                 const response = await fetch(
                   `https://api.pexels.com/v1/search?query=${query}&per_page=1&orientation=landscape`,
                   {
@@ -401,91 +399,6 @@ const Cart = ({ onApiCall }) => {
                       <Link to="/" className="continue-shopping">
                         Continue Shopping
                       </Link>
-                    </div>
-                  </div>
-
-                  {/* Green delivery and carbon offset options */}
-                  <div className="green-options">
-                    <h3>
-                      <FaLeaf className="green-icon" />
-                      <span>Eco-Friendly Options</span>
-                    </h3>
-
-                    <div className="option-row">
-                      <div className="option-checkbox">
-                        <input
-                          type="checkbox"
-                          id="greenDelivery"
-                          checked={greenDelivery}
-                          onChange={toggleGreenDelivery}
-                          className="green-checkbox"
-                        />
-                        <label
-                          htmlFor="greenDelivery"
-                          className="checkbox-label"
-                        >
-                          <div className="option-icon">
-                            <FaTruck />
-                          </div>
-                          <div className="option-text">
-                            <span className="option-title">
-                              Eco-friendly Delivery
-                            </span>
-                            <span className="option-description">
-                              CO2 reduction: 1.5kg
-                            </span>
-                          </div>
-                        </label>
-                      </div>
-                    </div>
-
-                    <div className="option-row">
-                      <div className="option-checkbox">
-                        <input
-                          type="checkbox"
-                          id="carbonOffset"
-                          checked={carbonOffset}
-                          onChange={toggleCarbonOffset}
-                          className="green-checkbox"
-                        />
-                        <label
-                          htmlFor="carbonOffset"
-                          className="checkbox-label"
-                        >
-                          <div className="option-icon">
-                            <FaLeaf />
-                          </div>
-                          <div className="option-text">
-                            <span className="option-title">Carbon Offset</span>
-                            <span className="option-description">
-                              +${(carbonFootprint * 0.1).toFixed(2)}
-                            </span>
-                          </div>
-                        </label>
-                      </div>
-                    </div>
-
-                    <div className="carbon-info">
-                      <div className="carbon-total">
-                        <span>Total Carbon Footprint:</span>
-                        <span className="carbon-value">
-                          {carbonFootprint.toFixed(2)} kg CO2e
-                        </span>
-                      </div>
-
-                      {calculatePotentialSavings() > 0 && (
-                        <div className="potential-savings">
-                          <span>Potential CO2 savings:</span>
-                          <span className="savings-value">
-                            {calculatePotentialSavings()} kg
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="eco-tip">
-                      <FaLeaf className="tip-icon" />
-                      <span>{greenTip}</span>
                     </div>
                   </div>
                 </div>

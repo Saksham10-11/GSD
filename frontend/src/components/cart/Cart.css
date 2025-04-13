@@ -490,6 +490,11 @@
     order: -1;
     margin-bottom: 1.5rem;
   }
+
+  .order-summary {
+    position: sticky; /* Ensure it remains sticky on smaller screens */
+    top: 1rem;
+  }
 }
 
 @media (max-width: 600px) {

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FaLeaf, FaShieldAlt, FaTruck, FaCreditCard } from "react-icons/fa";
 import { useCart } from "../../context/CartContext";
+import { calculateOrderTotal } from "../../utils/cartUtils";
 import "./Checkout.css";
 
 const Checkout = ({ onApiCall }) => {
@@ -25,6 +26,14 @@ const Checkout = ({ onApiCall }) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Calculate order total using shared utility function
+  const orderTotal = calculateOrderTotal(
+    totalPrice,
+    greenDelivery,
+    carbonOffset,
+    carbonFootprint
+  );
 
   // Handle input changes
   const handleChange = (e) => {
@@ -180,53 +189,9 @@ const Checkout = ({ onApiCall }) => {
             <span>${totalPrice.toFixed(2)}</span>
           </div>
 
-          <div className="summary-detail">
-            <span>Shipping:</span>
-            <span>
-              {greenDelivery ? "Green Shipping (Free)" : "Standard ($5.00)"}
-            </span>
-          </div>
-
-          <div className="summary-detail">
-            <span>Carbon Offset:</span>
-            <span>
-              {carbonOffset
-                ? `$${(carbonFootprint * 0.1).toFixed(2)}`
-                : "$0.00"}
-            </span>
-          </div>
-
           <div className="summary-total">
             <span>Total:</span>
-            <span>
-              $
-              {(
-                totalPrice +
-                (greenDelivery ? 0 : 5) +
-                (carbonOffset ? carbonFootprint * 0.1 : 0)
-              ).toFixed(2)}
-            </span>
-          </div>
-
-          <div className="eco-info">
-            <div className="eco-badge">
-              <FaLeaf />
-              <span>Carbon Footprint: {carbonFootprint.toFixed(2)}kg CO2e</span>
-            </div>
-
-            {greenDelivery && (
-              <div className="eco-badge">
-                <FaTruck />
-                <span>Eco-friendly Delivery</span>
-              </div>
-            )}
-
-            {carbonOffset && (
-              <div className="eco-badge">
-                <FaShieldAlt />
-                <span>Carbon Offset</span>
-              </div>
-            )}
+            <span>${orderTotal}</span>
           </div>
         </div>
       </div>

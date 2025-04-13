@@ -83,9 +83,7 @@ const ProductList = ({ onApiCall }) => {
           await Promise.all(
             batch.map(async (product) => {
               try {
-                const query = encodeURIComponent(
-                  product.category || product.name
-                );
+                const query = encodeURIComponent(product.name);
                 const response = await fetch(
                   `https://api.pexels.com/v1/search?query=${query}&per_page=1&orientation=landscape`,
                   {
