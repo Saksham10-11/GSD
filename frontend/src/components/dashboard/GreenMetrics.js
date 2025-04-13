@@ -108,78 +108,33 @@ const GreenMetrics = () => {
   ];
 
   return (
-    <div
-      style={{
-        backgroundColor: "#121212",
-        color: "#f0f0f0",
-        padding: "20px",
-        borderRadius: "8px",
-      }}
-    >
-      <h1 style={{ color: "#4caf50" }}>
-        Green Software & Sustainability Metrics
-      </h1>
-      <p>
+    <div className="green-metrics-container">
+      <h1>Green Software & Sustainability Metrics</h1>
+      <p className="subtitle">
         This application is built with green software practices to minimize its
         environmental impact.
       </p>
 
       {/* Main metrics dashboard */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
-          gap: "20px",
-          margin: "30px 0",
-        }}
-      >
+      <div className="metrics-grid">
         {/* Application Metrics */}
-        <div
-          className="metrics-card"
-          style={{
-            backgroundColor: "#1e1e1e",
-            borderRadius: "8px",
-            padding: "20px",
-            boxShadow: "0 4px 6px rgba(0,0,0,0.3)",
-            color: "#f0f0f0",
-          }}
-        >
-          <h3
-            style={{ display: "flex", alignItems: "center", color: "#e0e0e0" }}
-          >
-            <FaCode style={{ marginRight: "8px", color: "#4caf50" }} />
+        <div className="metrics-card">
+          <h3>
+            <FaCode className="card-icon" />
             Application Efficiency
           </h3>
-          <ul style={{ listStyle: "none", padding: 0, marginTop: "15px" }}>
-            <li
-              style={{
-                margin: "10px 0",
-                display: "flex",
-                justifyContent: "space-between",
-              }}
-            >
+          <ul className="metrics-list">
+            <li>
               <span>Energy Class:</span>
-              <strong style={{ color: "#4caf50" }}>
+              <strong className="highlight">
                 {metrics.appEnergyEfficiency}
               </strong>
             </li>
-            <li
-              style={{
-                margin: "10px 0",
-                display: "flex",
-                justifyContent: "space-between",
-              }}
-            >
+            <li>
               <span>Avg. Page Weight:</span>
               <strong>{metrics.estimatedPageWeight}</strong>
             </li>
-            <li
-              style={{
-                margin: "10px 0",
-                display: "flex",
-                justifyContent: "space-between",
-              }}
-            >
+            <li>
               <span>Cache Hit Rate:</span>
               <strong>{metrics.cacheHitRate}</strong>
             </li>
@@ -187,52 +142,23 @@ const GreenMetrics = () => {
         </div>
 
         {/* Shopping Metrics */}
-        <div
-          className="metrics-card"
-          style={{
-            backgroundColor: "#1e1e1e",
-            borderRadius: "8px",
-            padding: "20px",
-            boxShadow: "0 4px 6px rgba(0,0,0,0.3)",
-            color: "#f0f0f0",
-          }}
-        >
-          <h3
-            style={{ display: "flex", alignItems: "center", color: "#e0e0e0" }}
-          >
-            <FaLeaf style={{ marginRight: "8px", color: "#4caf50" }} />
+        <div className="metrics-card">
+          <h3>
+            <FaLeaf className="card-icon" />
             Your Green Impact
           </h3>
-          <ul style={{ listStyle: "none", padding: 0, marginTop: "15px" }}>
-            <li
-              style={{
-                margin: "10px 0",
-                display: "flex",
-                justifyContent: "space-between",
-              }}
-            >
+          <ul className="metrics-list">
+            <li>
               <span>Sustainable Products Selected:</span>
               <strong>{metrics.sustainableProductsCount}</strong>
             </li>
-            <li
-              style={{
-                margin: "10px 0",
-                display: "flex",
-                justifyContent: "space-between",
-              }}
-            >
+            <li>
               <span>Recycled Materials Products:</span>
               <strong>{metrics.recycledMaterialsCount}</strong>
             </li>
-            <li
-              style={{
-                margin: "10px 0",
-                display: "flex",
-                justifyContent: "space-between",
-              }}
-            >
+            <li>
               <span>Carbon Savings:</span>
-              <strong style={{ color: "#4caf50" }}>
+              <strong className="highlight">
                 {metrics.carbonSavingsTotal} kg CO2e
               </strong>
             </li>
@@ -240,50 +166,21 @@ const GreenMetrics = () => {
         </div>
 
         {/* Server Metrics */}
-        <div
-          className="metrics-card"
-          style={{
-            backgroundColor: "#1e1e1e",
-            borderRadius: "8px",
-            padding: "20px",
-            boxShadow: "0 4px 6px rgba(0,0,0,0.3)",
-            color: "#f0f0f0",
-          }}
-        >
-          <h3
-            style={{ display: "flex", alignItems: "center", color: "#e0e0e0" }}
-          >
-            <FaServer style={{ marginRight: "8px", color: "#4caf50" }} />
+        <div className="metrics-card">
+          <h3>
+            <FaServer className="card-icon" />
             Server Efficiency
           </h3>
-          <ul style={{ listStyle: "none", padding: 0, marginTop: "15px" }}>
-            <li
-              style={{
-                margin: "10px 0",
-                display: "flex",
-                justifyContent: "space-between",
-              }}
-            >
+          <ul className="metrics-list">
+            <li>
               <span>Energy Consumption:</span>
               <strong>{metrics.serverEnergyUsage}</strong>
             </li>
-            <li
-              style={{
-                margin: "10px 0",
-                display: "flex",
-                justifyContent: "space-between",
-              }}
-            >
+            <li>
               <span>API Call Optimization:</span>
               <strong>{metrics.apiCallsOptimized}</strong>
             </li>
-            <li
-              style={{
-                margin: "10px 0",
-                display: "flex",
-                justifyContent: "space-between",
-              }}
-            >
+            <li>
               <span>Data Transfer Saved:</span>
               <strong>{metrics.dataTransferSaved}</strong>
             </li>
@@ -292,144 +189,70 @@ const GreenMetrics = () => {
       </div>
 
       {/* Carbon footprint comparison */}
-      <div
-        style={{
-          padding: "20px",
-          backgroundColor: "#2e2e2e",
-          borderRadius: "8px",
-          marginBottom: "30px",
-          border: "1px solid #444444",
-        }}
-      >
-        <h3 style={{ color: "#4caf50" }}>Your Cart's Carbon Footprint</h3>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            marginTop: "20px",
-          }}
-        >
-          <div
-            style={{
-              width: "100%",
-              height: "24px",
-              backgroundColor: "#333333",
-              borderRadius: "12px",
-              position: "relative",
-              overflow: "hidden",
-              marginBottom: "10px",
-            }}
-          >
-            {/* Determine position based on carbon footprint (scale: 0-50kg) */}
+      <div className="carbon-footprint-container">
+        <h3>Your Cart's Carbon Footprint</h3>
+        <div className="carbon-footprint-indicator">
+          <div className="carbon-bar-container">
             <div
+              className="carbon-bar-fill"
               style={{
-                position: "absolute",
-                left: "0",
-                top: "0",
-                height: "100%",
                 width: `${Math.min(100, (carbonFootprint / 50) * 100)}%`,
                 backgroundColor:
                   carbonFootprint < 10
-                    ? "#4caf50"
+                    ? "var(--primary-color)"
                     : carbonFootprint < 25
-                    ? "#ff9800"
-                    : "#f44336",
-                borderRadius: "12px",
-                transition: "width 1s ease-in-out",
+                    ? "var(--warning-color)"
+                    : "var(--error-color)",
               }}
             ></div>
           </div>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              width: "100%",
-              color: "#e0e0e0",
-            }}
-          >
+          <div className="carbon-bar-labels">
             <span>0 kg CO2e</span>
             <span>25 kg CO2e</span>
             <span>50+ kg CO2e</span>
           </div>
-          <p
-            style={{ marginTop: "15px", textAlign: "center", color: "#f0f0f0" }}
-          >
+          <div className="carbon-footprint-value">
             <strong>
               Your Current Footprint: {carbonFootprint.toFixed(2)} kg CO2e
             </strong>
             <br />
-            <span style={{ fontSize: "0.9rem", color: "#e0e0e0" }}>
+            <span>
               {carbonFootprint < 10
                 ? "Great! Your cart has a low carbon footprint."
                 : carbonFootprint < 25
                 ? "Your cart has a moderate carbon footprint."
                 : "Consider swapping some items for more sustainable alternatives."}
             </span>
-          </p>
+          </div>
         </div>
       </div>
 
       {/* Green Software Practices */}
-      <h2 style={{ color: "#4caf50" }}>Our Green Software Practices</h2>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-          gap: "20px",
-          margin: "20px 0",
-        }}
-      >
+      <h2>Our Green Software Practices</h2>
+      <div className="green-practices-grid">
         {greenPractices.map((practice, index) => (
-          <div
-            key={index}
-            style={{
-              backgroundColor: "#1e1e1e",
-              borderRadius: "8px",
-              padding: "20px",
-              boxShadow: "0 4px 6px rgba(0,0,0,0.3)",
-              color: "#f0f0f0",
-            }}
-          >
-            <h3
-              style={{
-                display: "flex",
-                alignItems: "center",
-                color: "#e0e0e0",
-              }}
-            >
-              <span style={{ marginRight: "8px", color: "#4caf50" }}>
-                {practice.icon}
-              </span>
+          <div key={index} className="practice-card">
+            <h3>
+              <span className="practice-icon">{practice.icon}</span>
               {practice.title}
             </h3>
-            <p style={{ marginTop: "10px", color: "#e0e0e0" }}>
-              {practice.description}
-            </p>
+            <p>{practice.description}</p>
           </div>
         ))}
       </div>
 
       {/* Environmental impact section */}
-      <div
-        style={{
-          padding: "20px",
-          backgroundColor: "#2e2e2e",
-          borderRadius: "8px",
-          marginTop: "30px",
-          border: "1px solid #444444",
-        }}
-      >
-        <h3 style={{ color: "#4caf50" }}>Why Green Software Matters</h3>
-        <p style={{ color: "#e0e0e0" }}>
+      <div className="impact-section">
+        <h3>Why Green Software Matters</h3>
+        <p>
           The IT sector is responsible for 2-3% of global carbon emissions,
           similar to the aviation industry. By implementing green software
           practices, we can reduce energy consumption, lower carbon emissions,
           and minimize environmental impact.
         </p>
 
-        <h4 style={{ marginTop: "15px", color: "#4caf50" }}>Our Commitment</h4>
-        <p style={{ color: "#e0e0e0" }}>
+        <h4>Our Commitment</h4>
+        <p>
           We continuously optimize our application to reduce its environmental
           footprint. By choosing our platform for your shopping needs, you're
           supporting sustainable development practices in the digital world.

@@ -1,12 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import {
-  FaLeaf,
-  FaShoppingCart,
-  FaChartLine,
-  FaMoon,
-  FaSun,
-} from "react-icons/fa";
+import { FaLeaf, FaShoppingCart } from "react-icons/fa";
 import { useCart } from "../../context/CartContext";
 import "./Header.css";
 
@@ -15,20 +9,6 @@ const Header = ({ metrics }) => {
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [animateLeaf, setAnimateLeaf] = useState(false);
-
-  // Green practice: Calculate energy efficiency class based on metrics
-  const getEnergyClass = () => {
-    if (!metrics) return "A+";
-
-    const score =
-      metrics.pageLoads + metrics.apiCalls * 2 + metrics.dataTransferred / 50;
-
-    if (score < 10) return "A+";
-    if (score < 20) return "A";
-    if (score < 30) return "B";
-    if (score < 50) return "C";
-    return "D";
-  };
 
   // Handle scroll effect
   useEffect(() => {
@@ -61,17 +41,8 @@ const Header = ({ metrics }) => {
           <div className={`logo-icon ${animateLeaf ? "pulse" : ""}`}>
             <FaLeaf size={24} />
           </div>
-          <span>Green Shop</span>
+          <span>GREEN SHOP</span>
         </Link>
-
-        {/* Energy efficiency badge */}
-        <div
-          className="eco-badge header-badge"
-          title="Website energy efficiency rating"
-        >
-          <FaLeaf size={14} />
-          <span>Energy Class {getEnergyClass()}</span>
-        </div>
 
         <nav>
           <ul className="nav-links">
@@ -90,8 +61,7 @@ const Header = ({ metrics }) => {
                   location.pathname === "/green-metrics" ? "active" : ""
                 }
               >
-                <FaChartLine />
-                <span>Eco Impact</span>
+                Eco Impact
               </Link>
             </li>
             <li>

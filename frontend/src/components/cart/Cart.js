@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { Link } from "react-router-dom";
 import {
   FaLeaf,
@@ -6,8 +12,13 @@ import {
   FaMinus,
   FaPlus,
   FaShoppingCart,
+  FaInfoCircle,
+  FaTruck,
+  FaRecycle,
 } from "react-icons/fa";
 import { useCart } from "../../context/CartContext";
+import { calculateOrderTotal } from "../../utils/cartUtils";
+import "./Cart.css";
 
 const Cart = ({ onApiCall }) => {
   const {
@@ -30,128 +41,140 @@ const Cart = ({ onApiCall }) => {
   const [imageLoading, setImageLoading] = useState(false);
   const imageCache = useRef({});
 
-  // Fetch images from Pexels API
-  const fetchProductImages = async (cartItems) => {
-    if (!cartItems.length) return;
+  // This ref will store our selected tip so it doesn't change on re-renders
+  const selectedTipRef = useRef(null);
 
-    // To reduce API calls, we'll batch process images
-    const productsNeedingImages = cartItems.filter(
-      (item) => !imageCache.current[item.product._id]
-    );
+  // Fetch product images - optimized for fewer API calls
+  const fetchProductImages = useCallback(
+    async (productsToFetch) => {
+      if (!productsToFetch.length) return;
 
-    if (!productsNeedingImages.length) {
-      // If we have all images cached, just use the cache
-      const cachedImages = {};
-      cartItems.forEach((item) => {
-        cachedImages[item.product._id] = imageCache.current[item.product._id];
-      });
-      setProductImages(cachedImages);
-      return;
-    }
+      // To reduce API calls, we'll batch process images
+      const productsNeedingImages = productsToFetch.filter(
+        (item) => !imageCache.current[item.product._id]
+      );
 
-    setImageLoading(true);
-    const images = { ...productImages };
-
-    try {
-      // Get API key from environment variables
-      const PEXELS_API_KEY = process.env.REACT_APP_PEXELS_API_KEY;
-
-      if (!PEXELS_API_KEY) {
-        throw new Error("Pexels API key not found in environment variables");
+      if (!productsNeedingImages.length) {
+        // If we have all images cached, just use the cache
+        const cachedImages = {};
+        productsToFetch.forEach((item) => {
+          cachedImages[item.product._id] = imageCache.current[item.product._id];
+        });
+        setProductImages(cachedImages);
+        return;
       }
 
-      // Process in smaller batches to be environmentally friendly (fewer API calls)
-      const batchSize = 3;
-      for (let i = 0; i < productsNeedingImages.length; i += batchSize) {
-        const batch = productsNeedingImages.slice(i, i + batchSize);
+      setImageLoading(true);
+      const images = {}; // Create a new object instead of spreading existing state
 
-        await Promise.all(
-          batch.map(async (item) => {
-            try {
-              // Use product category and name for better search results
-              const searchTerm = `${item.product.category || ""} ${
-                item.product.name
-              }`;
-              const response = await fetch(
-                `https://api.pexels.com/v1/search?query=${encodeURIComponent(
-                  searchTerm
-                )}&per_page=1`,
-                {
-                  headers: {
-                    Authorization: PEXELS_API_KEY,
-                  },
-                }
-              );
+      try {
+        // Get API key from environment variables
+        const PEXELS_API_KEY = process.env.REACT_APP_PEXELS_API_KEY;
 
-              if (!response.ok) {
-                throw new Error(`Pexels API error: ${response.statusText}`);
-              }
-
-              const data = await response.json();
-
-              let imageUrl;
-              if (data.photos && data.photos.length > 0) {
-                // Use medium size for better performance
-                imageUrl = data.photos[0].src.medium;
-              } else {
-                // Use a placeholder based on product name
-                imageUrl = `https://via.placeholder.com/100x100?text=${encodeURIComponent(
-                  item.product.name
-                )}`;
-              }
-
-              // Update the image cache
-              imageCache.current[item.product._id] = imageUrl;
-              images[item.product._id] = imageUrl;
-            } catch (err) {
-              console.error(
-                `Error fetching image for ${item.product.name}:`,
-                err
-              );
-              images[
-                item.product._id
-              ] = `https://via.placeholder.com/100x100?text=${encodeURIComponent(
-                item.product.name
-              )}`;
-            }
-          })
-        );
-
-        // Small delay between batches to be gentle on the API
-        if (i + batchSize < productsNeedingImages.length) {
-          await new Promise((resolve) => setTimeout(resolve, 500));
+        if (!PEXELS_API_KEY) {
+          throw new Error("Pexels API key not found in environment variables");
         }
+
+        // Process in smaller batches to be environmentally friendly (fewer API calls)
+        const batchSize = 3;
+        for (let i = 0; i < productsNeedingImages.length; i += batchSize) {
+          const batch = productsNeedingImages.slice(i, i + batchSize);
+
+          await Promise.all(
+            batch.map(async (item) => {
+              try {
+                // Track API call
+                if (onApiCall) onApiCall(1);
+
+                const query = encodeURIComponent(
+                  item.product.category || item.product.name
+                );
+                const response = await fetch(
+                  `https://api.pexels.com/v1/search?query=${query}&per_page=1&orientation=landscape`,
+                  {
+                    headers: {
+                      Authorization: PEXELS_API_KEY,
+                    },
+                  }
+                );
+
+                if (!response.ok) {
+                  throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                if (data.photos && data.photos.length > 0) {
+                  // Use smaller image size for better energy efficiency
+                  const imageUrl = data.photos[0].src.medium;
+                  images[item.product._id] = imageUrl;
+                  imageCache.current[item.product._id] = imageUrl;
+                }
+              } catch (err) {
+                console.error(
+                  `Error fetching image for ${item.product.name}:`,
+                  err
+                );
+              }
+            })
+          );
+
+          // Add a small delay between batches to be respectful to the API
+          if (i + batchSize < productsNeedingImages.length) {
+            await new Promise((resolve) => setTimeout(resolve, 500));
+          }
+        }
+
+        // Merge with existing images from cache for any items we already had images for
+        productsToFetch.forEach((item) => {
+          if (
+            imageCache.current[item.product._id] &&
+            !images[item.product._id]
+          ) {
+            images[item.product._id] = imageCache.current[item.product._id];
+          }
+        });
+
+        setProductImages(images);
+      } catch (err) {
+        console.error("Error fetching product images:", err);
+      } finally {
+        setImageLoading(false);
       }
+    },
+    [onApiCall]
+  ); // Dependencies array
 
-      setProductImages(images);
-    } catch (error) {
-      console.error("Error fetching product images:", error);
-    } finally {
-      setImageLoading(false);
-    }
-  };
-
-  // Fetch images when cart items change
+  // Load images when cart items change
   useEffect(() => {
-    if (items && items.length > 0) {
+    if (items.length > 0) {
       fetchProductImages(items);
     }
-  }, [items]);
+  }, [items, fetchProductImages]);
 
-  // Green tip to display
-  const getRandomGreenTip = () => {
-    const tips = [
+  // Green tip to display - memoized to prevent regeneration on each render
+  const greenTips = useMemo(
+    () => [
       "Choosing green delivery can reduce carbon emissions by up to 30%.",
       "Carbon offsetting helps fund renewable energy and reforestation projects.",
       "Digital receipts save paper and reduce waste.",
       "Consolidating your purchases into fewer orders reduces packaging waste.",
       "Opting for sustainable products helps promote eco-friendly manufacturing.",
-    ];
-    return tips[Math.floor(Math.random() * tips.length)];
-  };
+    ],
+    []
+  );
 
-  // Potential carbon savings calculation
-  const calculatePotentialSavings = () => {
+  // Select a green tip only once and store it in a ref
+  // This ensures the tip doesn't change on re-renders
+  const greenTip = useMemo(() => {
+    if (selectedTipRef.current === null) {
+      selectedTipRef.current =
+        greenTips[Math.floor(Math.random() * greenTips.length)];
+    }
+    return selectedTipRef.current;
+  }, [greenTips]);
+
+  // Potential carbon savings calculation - memoized to prevent recalculation on every render
+  const calculatePotentialSavings = useCallback(() => {
     // Base calculations
     let savings = 0;
 
@@ -166,239 +189,306 @@ const Cart = ({ onApiCall }) => {
     }
 
     return savings.toFixed(2);
-  };
+  }, [greenDelivery, carbonOffset, carbonFootprint]);
+
+  // Memoize the order total calculation
+  const orderTotal = useMemo(
+    () =>
+      calculateOrderTotal(
+        totalPrice,
+        greenDelivery,
+        carbonOffset,
+        carbonFootprint
+      ),
+    [totalPrice, greenDelivery, carbonOffset, carbonFootprint]
+  );
+
+  // Memoized handlers for cart actions
+  const handleUpdateQuantity = useCallback(
+    (productId, newQuantity) => {
+      updateQuantity(productId, newQuantity);
+    },
+    [updateQuantity]
+  );
+
+  const handleRemoveFromCart = useCallback(
+    (productId) => {
+      removeFromCart(productId);
+    },
+    [removeFromCart]
+  );
 
   return (
     <div className="cart-container">
       <div className="cart-header">
         <h1>Your Cart</h1>
-        <span>{totalItems} items</span>
+        <span className="cart-count-badge">{totalItems} items</span>
       </div>
 
-      {loading && <p>Loading cart...</p>}
-      {error && <p className="error">{error}</p>}
+      {loading && <div className="loading-spinner"></div>}
+      {error && <div className="error-message">{error}</div>}
 
       {!loading && !error && (
         <>
           {items.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "30px 0" }}>
-              <FaShoppingCart size={48} color="#c5e1a5" />
-              <h3 style={{ margin: "15px 0" }}>Your cart is empty</h3>
+            <div className="empty-cart">
+              <FaShoppingCart size={60} />
+              <h3>Your cart is empty</h3>
               <p>Add sustainable products to your cart to get started.</p>
-              <Link
-                to="/"
-                className="btn"
-                style={{ marginTop: "20px", display: "inline-block" }}
-              >
+              <Link to="/" className="btn">
                 Browse Products
               </Link>
             </div>
           ) : (
             <>
-              <div className="cart-items">
-                {items.map((item) => (
-                  <div key={item.product._id} className="cart-item">
-                    <img
-                      src={
-                        productImages[item.product._id] ||
-                        item.product.image ||
-                        `https://via.placeholder.com/100x100?text=${encodeURIComponent(
-                          item.product.name
-                        )}`
-                      }
-                      alt={item.product.name}
-                      className="cart-item-image"
-                      loading="lazy" // Green practice: lazy loading
-                    />
+              <div className="cart-grid">
+                <div className="cart-items">
+                  {items.map((item) => (
+                    <div key={item.product._id} className="cart-item">
+                      <div className="item-image-container">
+                        <img
+                          src={
+                            productImages[item.product._id] ||
+                            item.product.image ||
+                            `https://via.placeholder.com/150x150?text=${encodeURIComponent(
+                              item.product.name
+                            )}`
+                          }
+                          alt={item.product.name}
+                          className="cart-item-image"
+                          loading="lazy" // Green practice: lazy loading
+                        />
+                      </div>
 
-                    <div className="cart-item-details">
-                      <h3 className="cart-item-title">
-                        <Link to={`/product/${item.product._id}`}>
-                          {item.product.name}
-                        </Link>
-                      </h3>
-
-                      <p className="cart-item-price">
-                        ${(item.product.price * item.quantity).toFixed(2)}
-                      </p>
-
-                      {/* Sustainability score if available */}
-                      {item.product.sustainabilityScore && (
-                        <div
-                          className="sustainability-score"
-                          style={{ marginTop: "5px" }}
-                        >
-                          <FaLeaf color="#4caf50" size={14} />
-                          <span
-                            style={{ marginLeft: "5px", fontSize: "0.9rem" }}
-                          >
-                            Sustainability: {item.product.sustainabilityScore}
-                            /100
-                          </span>
+                      <div className="cart-item-details">
+                        <div className="cart-item-header">
+                          <h3 className="cart-item-title">
+                            {item.product.name}
+                          </h3>
+                          <div className="cart-item-price">
+                            ${(item.product.price * item.quantity).toFixed(2)}
+                          </div>
                         </div>
-                      )}
 
-                      {/* Carbon footprint if available */}
-                      {item.product.carbonFootprint && (
-                        <div
-                          style={{
-                            fontSize: "0.8rem",
-                            marginTop: "5px",
-                            color: "#555",
-                          }}
-                        >
-                          Carbon:{" "}
-                          {(
-                            item.product.carbonFootprint * item.quantity
-                          ).toFixed(2)}
-                          kg CO2e
+                        {/* Product attributes and badges */}
+                        <div className="cart-item-attributes">
+                          {/* Sustainability score */}
+                          {item.product.sustainabilityScore && (
+                            <div className="item-badge sustainability-badge">
+                              <FaLeaf size={14} />
+                              <span>
+                                Eco Score: {item.product.sustainabilityScore}
+                                /100
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Recycled materials badge */}
+                          {item.product.recycledMaterials && (
+                            <div className="item-badge recycled-badge">
+                              <FaRecycle size={14} />
+                              <span>Recycled Materials</span>
+                            </div>
+                          )}
+
+                          {/* Carbon footprint */}
+                          {item.product.carbonFootprint && (
+                            <div className="item-badge carbon-badge">
+                              <FaInfoCircle size={14} />
+                              <span>
+                                Carbon:{" "}
+                                {(
+                                  item.product.carbonFootprint * item.quantity
+                                ).toFixed(2)}{" "}
+                                kg
+                              </span>
+                            </div>
+                          )}
                         </div>
-                      )}
 
-                      <div className="cart-item-actions">
-                        <div className="quantity-control">
+                        <div className="cart-item-actions">
+                          <div className="quantity-control">
+                            <button
+                              className="quantity-btn"
+                              onClick={() =>
+                                handleUpdateQuantity(
+                                  item.product._id,
+                                  Math.max(1, item.quantity - 1)
+                                )
+                              }
+                              aria-label="Decrease quantity"
+                            >
+                              <FaMinus />
+                            </button>
+                            <span className="quantity-value">
+                              {item.quantity}
+                            </span>
+                            <button
+                              className="quantity-btn"
+                              onClick={() =>
+                                handleUpdateQuantity(
+                                  item.product._id,
+                                  item.quantity + 1
+                                )
+                              }
+                              aria-label="Increase quantity"
+                            >
+                              <FaPlus />
+                            </button>
+                          </div>
+
                           <button
-                            className="quantity-btn"
+                            className="remove-btn"
                             onClick={() =>
-                              updateQuantity(
-                                item.product._id,
-                                Math.max(1, item.quantity - 1)
-                              )
+                              handleRemoveFromCart(item.product._id)
                             }
-                            aria-label="Decrease quantity"
+                            aria-label="Remove from cart"
                           >
-                            <FaMinus size={12} />
-                          </button>
-                          <span className="quantity-value">
-                            {item.quantity}
-                          </span>
-                          <button
-                            className="quantity-btn"
-                            onClick={() =>
-                              updateQuantity(
-                                item.product._id,
-                                item.quantity + 1
-                              )
-                            }
-                            aria-label="Increase quantity"
-                          >
-                            <FaPlus size={12} />
+                            <FaTrash />
+                            <span>Remove</span>
                           </button>
                         </div>
-
-                        <button
-                          className="remove-btn"
-                          onClick={() => removeFromCart(item.product._id)}
-                        >
-                          <FaTrash size={14} />
-                          <span>Remove</span>
-                        </button>
                       </div>
                     </div>
+                  ))}
+                </div>
+
+                <div className="cart-sidebar">
+                  <div className="order-summary">
+                    <h3>Order Summary</h3>
+
+                    <div className="summary-row">
+                      <span>Subtotal ({totalItems} items)</span>
+                      <span className="amount">${totalPrice.toFixed(2)}</span>
+                    </div>
+
+                    <div className="summary-row">
+                      <span>Shipping</span>
+                      <span className="amount">
+                        {greenDelivery ? (
+                          <span className="eco-shipping">Green (Free)</span>
+                        ) : (
+                          <span>Standard ($5.00)</span>
+                        )}
+                      </span>
+                    </div>
+
+                    <div className="summary-row">
+                      <span>Carbon Offset</span>
+                      <span className="amount">
+                        {carbonOffset ? (
+                          <span className="eco-carbon">
+                            ${(carbonFootprint * 0.1).toFixed(2)}
+                          </span>
+                        ) : (
+                          <span>Not Applied</span>
+                        )}
+                      </span>
+                    </div>
+
+                    <div className="summary-divider"></div>
+
+                    <div className="cart-total">
+                      <span>Total</span>
+                      <span className="total-amount">${orderTotal}</span>
+                    </div>
+
+                    <div className="checkout-actions">
+                      <Link to="/checkout" className="btn checkout-btn">
+                        Proceed to Checkout
+                      </Link>
+
+                      <Link to="/" className="continue-shopping">
+                        Continue Shopping
+                      </Link>
+                    </div>
                   </div>
-                ))}
-              </div>
 
-              <div className="cart-summary">
-                <h3>Order Summary</h3>
+                  {/* Green delivery and carbon offset options */}
+                  <div className="green-options">
+                    <h3>
+                      <FaLeaf className="green-icon" />
+                      <span>Eco-Friendly Options</span>
+                    </h3>
 
-                <div className="summary-row">
-                  <span>Subtotal</span>
-                  <span>${totalPrice.toFixed(2)}</span>
+                    <div className="option-row">
+                      <div className="option-checkbox">
+                        <input
+                          type="checkbox"
+                          id="greenDelivery"
+                          checked={greenDelivery}
+                          onChange={toggleGreenDelivery}
+                          className="green-checkbox"
+                        />
+                        <label
+                          htmlFor="greenDelivery"
+                          className="checkbox-label"
+                        >
+                          <div className="option-icon">
+                            <FaTruck />
+                          </div>
+                          <div className="option-text">
+                            <span className="option-title">
+                              Eco-friendly Delivery
+                            </span>
+                            <span className="option-description">
+                              CO2 reduction: 1.5kg
+                            </span>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="option-row">
+                      <div className="option-checkbox">
+                        <input
+                          type="checkbox"
+                          id="carbonOffset"
+                          checked={carbonOffset}
+                          onChange={toggleCarbonOffset}
+                          className="green-checkbox"
+                        />
+                        <label
+                          htmlFor="carbonOffset"
+                          className="checkbox-label"
+                        >
+                          <div className="option-icon">
+                            <FaLeaf />
+                          </div>
+                          <div className="option-text">
+                            <span className="option-title">Carbon Offset</span>
+                            <span className="option-description">
+                              +${(carbonFootprint * 0.1).toFixed(2)}
+                            </span>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="carbon-info">
+                      <div className="carbon-total">
+                        <span>Total Carbon Footprint:</span>
+                        <span className="carbon-value">
+                          {carbonFootprint.toFixed(2)} kg CO2e
+                        </span>
+                      </div>
+
+                      {calculatePotentialSavings() > 0 && (
+                        <div className="potential-savings">
+                          <span>Potential CO2 savings:</span>
+                          <span className="savings-value">
+                            {calculatePotentialSavings()} kg
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="eco-tip">
+                      <FaLeaf className="tip-icon" />
+                      <span>{greenTip}</span>
+                    </div>
+                  </div>
                 </div>
-
-                <div className="summary-row">
-                  <span>Shipping</span>
-                  <span>
-                    {greenDelivery
-                      ? "Green Shipping (Free)"
-                      : "Standard Shipping ($5.00)"}
-                  </span>
-                </div>
-
-                <div className="summary-row">
-                  <span>Carbon Offset {carbonOffset && "(Applied)"}</span>
-                  <span>
-                    {carbonOffset
-                      ? `$${(carbonFootprint * 0.1).toFixed(2)}`
-                      : "$0.00"}
-                  </span>
-                </div>
-
-                <div className="cart-total">
-                  <span>Total</span>
-                  <span>
-                    $
-                    {(
-                      totalPrice +
-                      (greenDelivery ? 0 : 5) +
-                      (carbonOffset ? carbonFootprint * 0.1 : 0)
-                    ).toFixed(2)}
-                  </span>
-                </div>
-              </div>
-
-              {/* Green delivery and carbon offset options */}
-              <div className="green-options">
-                <h3 style={{ display: "flex", alignItems: "center" }}>
-                  <FaLeaf style={{ marginRight: "8px" }} />
-                  Eco-Friendly Options
-                </h3>
-
-                <div className="option-row">
-                  <input
-                    type="checkbox"
-                    id="greenDelivery"
-                    checked={greenDelivery}
-                    onChange={toggleGreenDelivery}
-                    className="green-checkbox"
-                  />
-                  <label htmlFor="greenDelivery">
-                    Eco-friendly Delivery (CO2 reduction: 1.5kg)
-                  </label>
-                </div>
-
-                <div className="option-row">
-                  <input
-                    type="checkbox"
-                    id="carbonOffset"
-                    checked={carbonOffset}
-                    onChange={toggleCarbonOffset}
-                    className="green-checkbox"
-                  />
-                  <label htmlFor="carbonOffset">
-                    Carbon Offset (+${(carbonFootprint * 0.1).toFixed(2)})
-                  </label>
-                </div>
-
-                <div className="carbon-info">
-                  <p>
-                    Total Carbon Footprint: {carbonFootprint.toFixed(2)}kg CO2e
-                  </p>
-                  {calculatePotentialSavings() > 0 && (
-                    <p style={{ marginTop: "5px", color: "#2e7d32" }}>
-                      Potential CO2 savings: {calculatePotentialSavings()}kg
-                    </p>
-                  )}
-                </div>
-
-                <div className="eco-tip">
-                  <FaLeaf style={{ marginRight: "5px" }} />
-                  <span>Tip: {getRandomGreenTip()}</span>
-                </div>
-              </div>
-
-              <div style={{ marginTop: "20px", textAlign: "right" }}>
-                <Link
-                  to="/"
-                  className="btn btn-outline"
-                  style={{ marginRight: "10px" }}
-                >
-                  Continue Shopping
-                </Link>
-                <Link to="/checkout" className="btn">
-                  Proceed to Checkout
-                </Link>
               </div>
             </>
           )}
@@ -408,4 +498,4 @@ const Cart = ({ onApiCall }) => {
   );
 };
 
-export default Cart;
+export default React.memo(Cart);
