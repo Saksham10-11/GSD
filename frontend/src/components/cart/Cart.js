@@ -18,6 +18,7 @@ import {
 } from "react-icons/fa";
 import { useCart } from "../../context/CartContext";
 import { calculateOrderTotal } from "../../utils/cartUtils";
+import ProductRecommendations from "../products/ProductRecommendations";
 import "./Cart.css";
 
 const Cart = ({ onApiCall }) => {
@@ -236,6 +237,9 @@ const Cart = ({ onApiCall }) => {
               <Link to="/" className="btn">
                 Browse Products
               </Link>
+
+              {/* Show recommendations even when cart is empty */}
+              <ProductRecommendations onApiCall={onApiCall} />
             </div>
           ) : (
             <>
@@ -403,6 +407,9 @@ const Cart = ({ onApiCall }) => {
                   </div>
                 </div>
               </div>
+
+              {/* Add product recommendations below the cart items */}
+              <ProductRecommendations onApiCall={onApiCall} />
             </>
           )}
         </>
